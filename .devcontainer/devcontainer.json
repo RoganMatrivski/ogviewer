@@ -1,0 +1,58 @@
+{
+    "name": "opengraph-card-viewer",
+    // "image": "ghcr.io/nhaef/devcontainer-bun:latest",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // Update 'VARIANT' to pick a Bun version.
+        "args": {
+            "VARIANT": "latest"
+        }
+    },
+    "features": {
+      "ghcr.io/devcontainers-extra/features/cloudflare-wrangler:1": {}
+    },
+    "mounts": [
+		{
+			"source": "${localWorkspaceFolderBasename}-volume",
+			"target": "/mnt/docker-mnt",
+			"type": "volume"
+		}
+    ],
+    "postStartCommand": "chmod +x ./.devcontainer/onStart.sh; containerWorkspaceFolder=${containerWorkspaceFolder} ./.devcontainer/onStart.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "biomejs.biome",
+                "alefragnani.Bookmarks",
+                "bierner.color-info",
+                "christian-kohler.npm-intellisense",
+                "christian-kohler.path-intellisense",
+                "cmstead.js-codeformer",
+                "cmstead.jsrefactor",
+                "cssho.vscode-svgviewer",
+                "davidanson.vscode-markdownlint",
+                "drKnoxy.eslint-disable-snippets",
+                "dsznajder.es7-react-js-snippets",
+                "eamodio.gitlens",
+                "github.vscode-pull-request-github",
+                "Gruntfuggly.todo-tree",
+                "IBM.output-colorizer",
+                "JakeWilson.vscode-cdnjs",
+                "jpoissonnier.vscode-styled-components",
+                "ms-azuretools.vscode-docker",
+                "oderwat.indent-rainbow",
+                "planbcoding.vscode-react-refactor",
+                "quicktype.quicktype",
+                "Rubymaniac.vscode-paste-and-indent",
+                "shardulm94.trailing-spaces",
+                "spikespaz.vscode-smoothtype",
+                "stkb.rewrap",
+                "visualstudioexptteam.vscodeintellicode",
+                "vscode-icons-team.vscode-icons",
+                "xabikos.JavaScriptSnippets",
+                "EditorConfig.EditorConfig",
+                "bradlc.vscode-tailwindcss"
+            ]
+        }
+    }
+}
