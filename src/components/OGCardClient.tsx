@@ -1,4 +1,4 @@
-"use server";
+"use client";
 
 import Image from "next/image";
 import {
@@ -15,25 +15,30 @@ import { OGMeta } from "@/types/OpenGraph";
 import { Button } from "./ui/button";
 import getOG from "@/actions/FetchOG";
 import { AlertTriangle } from "lucide-react";
-import OGCardAddButton from "./OGCardAddButton";
 
 type OGCardProps = {
 	meta: OGMeta;
 	link?: string;
 };
 
-export default async function OGCard({ meta }: OGCardProps) {
+export default function OGCard({ meta }: OGCardProps) {
 	const preview = meta.video || meta.image || "";
 	return (
 		<Card className="py-0 pb-6 overflow-hidden w-min-60 h-full bg-white text-black dark:bg-gray-900 dark:text-white">
 			<div className="overflow-hidden h-[40vh]">
-				<Image
-					src={preview}
-					alt="Website preview"
-					className="object-cover w-full h-full"
-					width="480"
-					height="360"
-				/>
+				{preview ? (
+					<Image
+						src={preview}
+						alt="Preview"
+						className="object-cover w-full h-full blur-lg hover:blur-none transition-all"
+						width="480"
+						height="360"
+					/>
+				) : (
+					<div className="h-full flex items-center justify-center">
+						<span>Preview not available</span>
+					</div>
+				)}
 			</div>
 			<CardHeader>
 				<CardTitle>{meta.title}</CardTitle>
@@ -45,15 +50,14 @@ export default async function OGCard({ meta }: OGCardProps) {
 				<p className="text-gray-800 dark:text-gray-300">{meta.description}</p>
 			</CardContent>
 			<CardFooter className="flex flex-col gap-2 [&>button]:cursor-pointer">
-				{/* <Button className="w-full h-20" variant="default">
+				<Button className="w-full h-20" variant="default">
 					Add
-				</Button> */}
-
-				<OGCardAddButton url={meta.url || ""} />
-
-				<Button className="w-full" variant="secondary" asChild>
-					<a href={meta.url}>Visit</a>
 				</Button>
+				{meta.url && (
+					<Button className="w-full" variant="secondary" asChild>
+						<Link href={meta.url}>Visit</Link>
+					</Button>
+				)}
 			</CardFooter>
 		</Card>
 	);
@@ -83,9 +87,7 @@ OGCard.Error = ({
 			<CardContent className="flex-grow">
 				<p className="text-red-700 dark:text-red-400">{message}</p>
 			</CardContent>
-			<CardFooter className="flex flex-col gap-2 [&_a]:cursor-pointer [&_button]:cursor-pointer">
-				<OGCardAddButton url={url || ""} />
-
+			<CardFooter className="flex flex-col gap-2 [&_a]:cursor-pointer">
 				{url && (
 					<Button className="w-full" variant="secondary" asChild>
 						<a
@@ -94,7 +96,7 @@ OGCard.Error = ({
 							rel="noopener noreferrer"
 							className="w-full"
 						>
-							Visit
+							Visit Original
 						</a>
 					</Button>
 				)}
@@ -103,31 +105,34 @@ OGCard.Error = ({
 	);
 };
 
-OGCard.Wrapper = async ({ url }: { url: string }) => {
-	try {
-		const og = await getOG(url);
-		if (!og || !og.title) {
-			// If OG data is missing or incomplete, show a specific error
-			return (
-				<OGCard.Error
-					message="No Open Graph data found for this URL."
-					url={url}
-				/>
-			);
-		}
-		return <OGCard meta={og} />;
-	} catch (error: any) {
-		console.error("Failed to fetch OG metadata:", error);
+import useSWR from "swr";
+import createMetascraper from "metascraper";
+import { fetcher } from "@/lib/fetcher";
+import Link from "next/link";
 
-		let message = "Failed to load preview.";
-		if (error?.response?.status === 404) {
-			message = "Page not found (404).";
-		} else if (error?.response?.status === 403) {
-			message = "Access forbidden (403).";
-		} else if (error instanceof Error && error.message) {
-			message = `Error: ${error.message}`;
-		}
+export const OGCardClient = ({ url }: { url: string }) => {
+	const { data, error, isLoading } = useSWR<createMetascraper.Metadata>(
+		`/api/getog?url=${url}`,
+		fetcher<createMetascraper.Metadata>,
+	);
 
-		return <OGCard.Error message={message} url={url} />;
-	}
+	if (isLoading)
+		return <div className="animate-pulse bg-gray-200 h-40 rounded" />;
+	if (!data || error)
+		return (
+			<OGCard.Error
+				message={
+					error
+						? "Failed to load preview."
+						: "No Open Graph data found for this URL."
+				}
+				url={url}
+			/>
+		);
+
+	return (
+		<div className="shadow-xl">
+			<OGCard meta={data} link={url} />
+		</div>
+	);
 };

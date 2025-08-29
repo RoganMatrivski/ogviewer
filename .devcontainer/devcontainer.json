@@ -5,20 +5,31 @@
         "dockerfile": "Dockerfile",
         // Update 'VARIANT' to pick a Bun version.
         "args": {
-            "VARIANT": "latest"
+            "VARIANT": "debian"
         }
     },
     "features": {
-      "ghcr.io/devcontainers-extra/features/cloudflare-wrangler:1": {}
+        "node": "lts",
+        "ghcr.io/devcontainers-extra/features/cloudflare-wrangler:1": {}
     },
     "mounts": [
-		{
-			"source": "${localWorkspaceFolderBasename}-volume",
-			"target": "/mnt/docker-mnt",
-			"type": "volume"
-		}
+        {
+            "source": "${localWorkspaceFolderBasename}-node_modules",
+            "target": "${containerWorkspaceFolder}/node_modules",
+            "type": "volume"
+        },
+        {
+            "source": "${localWorkspaceFolderBasename}-.next",
+            "target": "${containerWorkspaceFolder}/.next",
+            "type": "volume"
+        },
+        {
+            "source": "${localWorkspaceFolderBasename}-.open-next",
+            "target": "${containerWorkspaceFolder}/.open-next",
+            "type": "volume"
+        }
     ],
-    "postStartCommand": "chmod +x ./.devcontainer/onStart.sh; containerWorkspaceFolder=${containerWorkspaceFolder} ./.devcontainer/onStart.sh",
+    // "postStartCommand": "chmod +x ./.devcontainer/onStart.sh; containerWorkspaceFolder=${containerWorkspaceFolder} ./.devcontainer/onStart.sh",
     "customizations": {
         "vscode": {
             "extensions": [

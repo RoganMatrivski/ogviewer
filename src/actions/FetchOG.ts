@@ -1,3 +1,5 @@
+import fetchRetry from "fetch-retry";
+
 import metascraper from "metascraper";
 
 import meta_description from "metascraper-description";
@@ -5,6 +7,13 @@ import meta_image from "metascraper-image";
 import meta_title from "metascraper-title";
 import meta_url from "metascraper-url";
 import meta_video from "metascraper-video";
+
+// import meta_youtube from "metascraper-youtube"; // Broken
+
+import fs from "node:fs";
+import path from "node:path";
+
+const fetch = fetchRetry(global.fetch);
 
 async function getHtml(url: string) {
 	const response = await fetch(url);
@@ -14,6 +23,18 @@ async function getHtml(url: string) {
 		);
 	}
 	const html = await response.text();
+
+	if (url.includes("hypnotube.com")) {
+		const filename = url.split("/").at(-1);
+
+		if (!filename) {
+			return html;
+		}
+
+		const rootdir = process.cwd();
+		fs.writeFileSync(path.join(rootdir, `tmp/${filename}`), html);
+	}
+
 	return html;
 }
 
