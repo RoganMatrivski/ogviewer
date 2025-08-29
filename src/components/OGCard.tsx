@@ -23,7 +23,7 @@ type OGCardProps = {
 };
 
 export default async function OGCard({ meta }: OGCardProps) {
-	const preview = meta.video || meta.image || "";
+	const preview = meta.image || meta.video || "";
 	return (
 		<Card className="py-0 pb-6 overflow-hidden w-min-60 h-full bg-white text-black dark:bg-gray-900 dark:text-white">
 			<div className="overflow-hidden h-[40vh]">
@@ -36,13 +36,17 @@ export default async function OGCard({ meta }: OGCardProps) {
 				/>
 			</div>
 			<CardHeader>
-				<CardTitle>{meta.title}</CardTitle>
+				<CardTitle className="text-ellipsis overflow-hidden">
+					{meta.title}
+				</CardTitle>
 				<CardDescription className="text-gray-600 dark:text-gray-400">
 					{meta.url}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-grow">
-				<p className="text-gray-800 dark:text-gray-300">{meta.description}</p>
+				<p className="text-gray-800 dark:text-gray-300 text-ellipsis overflow-x-hidden">
+					{meta.description}
+				</p>
 			</CardContent>
 			<CardFooter className="flex flex-col gap-2 [&>button]:cursor-pointer">
 				{/* <Button className="w-full h-20" variant="default">
@@ -103,10 +107,35 @@ OGCard.Error = ({
 	);
 };
 
+function ImageUrlToMeta(url: string) {
+	const title = url.split("/").at(-1) || "Image";
+	return {
+		title,
+		image: url,
+		description: url,
+	};
+}
+
+async function checkImage(url: string) {
+	const res = await fetch(url);
+	const buff = await res.blob();
+
+	return buff.type.startsWith("image/");
+}
+
 OGCard.Wrapper = async ({ url }: { url: string }) => {
 	try {
 		const og = await getOG(url);
 		if (!og || !og.title) {
+			// If url is an image, construct meta from img URL
+			if (
+				url.match(/\.(jpeg|jpg|gif|png)$/) != null ||
+				(await checkImage(url))
+			) {
+				const imgMeta = ImageUrlToMeta(url);
+				return <OGCard meta={imgMeta} />;
+			}
+
 			// If OG data is missing or incomplete, show a specific error
 			return (
 				<OGCard.Error
