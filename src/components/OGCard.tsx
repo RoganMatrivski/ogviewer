@@ -27,19 +27,28 @@ export default async function OGCard({ meta }: OGCardProps) {
 	return (
 		<Card className="py-0 pb-6 overflow-hidden w-min-60 h-full bg-white text-black dark:bg-gray-900 dark:text-white">
 			<div className="overflow-hidden h-[40vh]">
-				<Image
-					src={preview}
-					alt="Website preview"
-					className="object-cover w-full h-full"
-					width="480"
-					height="360"
-				/>
+				<div className="relative w-full h-full overflow-hidden">
+					<Image
+						src={preview}
+						alt="Website preview"
+						className="absolute inset-0 w-full h-full object-cover blur-lg brightness-50"
+						width="480"
+						height="360"
+					/>
+					<Image
+						src={preview}
+						alt="Website preview"
+						className="relative w-full h-full object-cover transition-all duration-500 hover:object-contain"
+						width="480"
+						height="360"
+					/>
+				</div>
 			</div>
 			<CardHeader>
 				<CardTitle className="text-ellipsis overflow-hidden">
 					{meta.title}
 				</CardTitle>
-				<CardDescription className="text-gray-600 dark:text-gray-400">
+				<CardDescription className="text-gray-600 dark:text-gray-400 text-ellipsis overflow-hidden">
 					{meta.url}
 				</CardDescription>
 			</CardHeader>
