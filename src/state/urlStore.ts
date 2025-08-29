@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import * as R from "ramda";
 
 interface UrlState {
@@ -8,11 +9,20 @@ interface UrlState {
 	clearUrl: () => void;
 }
 
-export const useUrlStore = create<UrlState>((set) => ({
-	urls: [],
-	addUrl: (url: string) =>
-		set((state) => ({ urls: R.append(url, state.urls) })),
-	removeUrl: (url: string) =>
-		set((state) => ({ urls: R.without([url], state.urls) })),
-	clearUrl: () => set(() => ({ urls: [] })),
-}));
+export const useUrlStore = create<UrlState>()(
+	persist(
+		(set) => ({
+			urls: [],
+			addUrl: (url: string) =>
+				set((state) => ({ urls: R.append(url, state.urls) })),
+			removeUrl: (url: string) =>
+				set((state) => ({ urls: R.without([url], state.urls) })),
+			clearUrl: () => set(() => ({ urls: [] })),
+		}),
+		{
+			name: "urls-state", // name of the item in the storage (must be unique)
+			storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+			partialize: (state) => ({ urls: state.urls }),
+		},
+	),
+);
