@@ -23,11 +23,11 @@
             "target": "${containerWorkspaceFolder}/.next",
             "type": "volume"
         },
-        {
-            "source": "${localWorkspaceFolderBasename}-.open-next",
-            "target": "${containerWorkspaceFolder}/.open-next",
-            "type": "volume"
-        }
+        // {
+        //     "source": "${localWorkspaceFolderBasename}-.open-next",
+        //     "target": "${containerWorkspaceFolder}/.open-next",
+        //     "type": "volume"
+        // }
     ],
     // "postStartCommand": "chmod +x ./.devcontainer/onStart.sh; containerWorkspaceFolder=${containerWorkspaceFolder} ./.devcontainer/onStart.sh",
     "customizations": {
