@@ -51,12 +51,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.4",
-    "@chromatic-com/storybook": "^4.0.1",
-    "@storybook/addon-a11y": "^9.0.15",
-    "@storybook/addon-docs": "^9.0.15",
-    "@storybook/addon-onboarding": "^9.0.15",
-    "@storybook/addon-vitest": "^9.0.15",
-    "@storybook/nextjs-vite": "^9.0.15",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^24.0.3",
     "@types/ramda": "^0.31.0",
