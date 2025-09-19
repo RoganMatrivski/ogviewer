@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
 		config.resolve.alias.re2 = false;
 		return config;
 	},
+	output: "standalone",
 };
 
 // if (process.env.NODE_ENV === "development") {

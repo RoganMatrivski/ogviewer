@@ -1,0 +1,22 @@
+services:
+  ogv:
+    build: .
+    container_name: ogv
+    logging:
+      options:
+        max-size: 1m
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ogv.rule=HostRegexp(`^ogv\.?srv[1-9](\-rgmtrv\.duckdns\.org|\.rgmtrv[1-9]?\.my\.id)$$`)
+      - traefik.http.routers.ogv.entrypoints=web,websecure
+      # - traefik.http.routers.ogv.tls=true
+      - traefik.http.routers.ogv.service=ogv
+      - traefik.http.services.ogv.loadbalancer.server.port=3000
+
+networks:
+  traefik:
+    name: traefik_network
+    external: true
