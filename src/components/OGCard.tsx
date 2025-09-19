@@ -16,6 +16,7 @@ import { Button } from "./ui/button";
 import getOG from "@/actions/FetchOG";
 import { AlertTriangle } from "lucide-react";
 import OGCardAddButton from "./OGCardAddButton";
+import OGCardContent from "./OGCardContent";
 
 type OGCardProps = {
 	meta: OGMeta;
@@ -26,24 +27,30 @@ export default async function OGCard({ meta }: OGCardProps) {
 	const preview = meta.image || meta.video || "";
 	return (
 		<Card className="py-0 pb-6 overflow-hidden w-min-60 h-full bg-white text-black dark:bg-gray-900 dark:text-white">
-			<div className="overflow-hidden h-[40vh]">
-				<div className="relative w-full h-full overflow-hidden">
-					<Image
-						src={preview}
-						alt="Website preview"
-						className="absolute inset-0 w-full h-full object-cover blur-lg brightness-50"
-						width="480"
-						height="360"
-					/>
-					<Image
-						src={preview}
-						alt="Website preview"
-						className="relative w-full h-full object-cover transition-all duration-500 hover:object-contain"
-						width="480"
-						height="360"
-					/>
+			{meta.image ? (
+				<div className="overflow-hidden h-[40vh]">
+					<div className="relative w-full h-full overflow-hidden">
+						<Image
+							src={preview}
+							alt="Website preview"
+							className="absolute inset-0 w-full h-full object-cover blur-lg brightness-50"
+							width="480"
+							height="360"
+						/>
+						<Image
+							src={preview}
+							alt="Website preview"
+							className="relative w-full h-full object-cover transition-all duration-500 hover:object-contain"
+							width="480"
+							height="360"
+						/>
+					</div>
 				</div>
-			</div>
+			) : (
+				<div className="overflow-hidden h-[40vh] flex items-center justify-center">
+					<span className="text-2xl">{meta.title}</span>
+				</div>
+			)}
 			<CardHeader>
 				<CardTitle className="text-ellipsis overflow-hidden">
 					{meta.title}
@@ -56,6 +63,8 @@ export default async function OGCard({ meta }: OGCardProps) {
 				<p className="text-gray-800 dark:text-gray-300 text-ellipsis overflow-x-hidden">
 					{meta.description}
 				</p>
+
+				{/* <OGCardContent content={meta.description ?? ""} /> */}
 			</CardContent>
 			<CardFooter className="flex flex-col gap-2 [&>button]:cursor-pointer">
 				{/* <Button className="w-full h-20" variant="default">
@@ -155,7 +164,7 @@ OGCard.Wrapper = async ({ url }: { url: string }) => {
 		}
 		return <OGCard meta={og} />;
 	} catch (error: any) {
-		console.error("Failed to fetch OG metadata:", error);
+		// console.error("Failed to fetch OG metadata:", error);
 
 		let message = "Failed to load preview.";
 		if (error?.response?.status === 404) {
@@ -169,3 +178,7 @@ OGCard.Wrapper = async ({ url }: { url: string }) => {
 		return <OGCard.Error message={message} url={url} />;
 	}
 };
+
+OGCard.Loading = () => (
+	<div className="animate-pulse bg-gray-900 h-[20vh] rounded" />
+);

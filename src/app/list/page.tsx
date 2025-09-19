@@ -14,11 +14,9 @@ export default async function ListLinePerUrl({
 }) {
 	const qParams = await searchParams;
 	const qGetter = (key: string) =>
-		Array.isArray(qParams[key])
-			? (qParams[key][0] ?? "")
-			: (qParams[key] ?? "");
+		Array.isArray(qParams[key]) ? qParams[key][0] : qParams[key];
 
-	const listUrl = qGetter("list");
+	const listUrl = qGetter("list") ?? qGetter("file") ?? "";
 
 	let list: string[] = [];
 	try {
@@ -37,7 +35,7 @@ export default async function ListLinePerUrl({
 	if (list.length <= 0)
 		return NextResponse.json({ error: "Invalid list" }, { status: 400 });
 
-	const parsedPage = Number.parseInt(qGetter("page"), 10);
+	const parsedPage = Number.parseInt(qGetter("page") ?? "", 10);
 	const page = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
 
 	const start = (page - 1) * itemsPerPage;
@@ -52,7 +50,9 @@ export default async function ListLinePerUrl({
 			if (typeof value === "string") {
 				urlParams.append(key, value);
 			} else if (Array.isArray(value)) {
-				value.forEach((v) => urlParams.append(key, v));
+				value.forEach((v) => {
+					urlParams.append(key, v);
+				});
 			}
 			// skip undefined
 		});
@@ -64,7 +64,7 @@ export default async function ListLinePerUrl({
 	return (
 		<div className="container mx-auto p-4">
 			{/* <ModeToggle /> */}
-			<div className="my-2">
+			<div className="mb-2">
 				<Pagination
 					currentPage={page}
 					itemsPerPage={itemsPerPage}
@@ -74,12 +74,7 @@ export default async function ListLinePerUrl({
 			</div>
 			<div className="grid gap-4  lg:grid-cols-4 sm:grid-cols-2 ">
 				{items.map((x) => (
-					<Suspense
-						key={x}
-						fallback={
-							<div className="animate-pulse bg-gray-200 h-40 rounded" />
-						}
-					>
+					<Suspense key={x} fallback={<OGCard.Loading />}>
 						<OGCard.Wrapper url={x} />
 					</Suspense>
 				))}
