@@ -3,6 +3,142 @@ import fetchRetry from "fetch-retry";
 
 const fetch = fetchRetry(global.fetch);
 
+// ─── Regex-based fallback parser ────────────────────────────────────────────
+// Used in runtimes that don't have native HTMLRewriter (e.g. Next.js Node SSR).
+// Only needs to handle <title>, <meta>, and <link rel="canonical"> — no full DOM.
+
+function parseOGFromHTML(html: string): OGMeta {
+  const meta: OGMeta = {
+    title: null,
+    description: null,
+    image: null,
+    url: null,
+    video: null,
+  };
+
+  // <title>...</title>
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const fallbackTitle = titleMatch ? titleMatch[1].trim() : null;
+
+  // <meta property="..." content="..."> or <meta name="..." content="...">
+  // Handles any attribute order and single/double quotes.
+  for (const m of html.matchAll(/<meta\s+([^>]+?)(?:\s*\/)?>/gi)) {
+    const attrs = m[1];
+    const prop = attrValue(attrs, "property") ?? attrValue(attrs, "name");
+    const content = attrValue(attrs, "content");
+    if (!prop || !content) continue;
+
+    switch (prop) {
+      case "og:title":
+      case "twitter:title":
+        if (!meta.title) meta.title = content;
+        break;
+      case "og:description":
+      case "twitter:description":
+      case "description":
+        if (!meta.description) meta.description = content;
+        break;
+      case "og:image":
+      case "og:image:secure_url":
+      case "twitter:image":
+        if (!meta.image) meta.image = content;
+        break;
+      case "og:url":
+        if (!meta.url) meta.url = content;
+        break;
+      case "og:video":
+      case "og:video:url":
+      case "og:video:secure_url":
+      case "twitter:player":
+        if (!meta.video) meta.video = content;
+        break;
+    }
+  }
+
+  // <link rel="canonical" href="...">
+  if (!meta.url) {
+    for (const m of html.matchAll(/<link\s+([^>]+?)(?:\s*\/)?>/gi)) {
+      const attrs = m[1];
+      if (/rel=["']canonical["']/i.test(attrs)) {
+        meta.url = attrValue(attrs, "href");
+        break;
+      }
+    }
+  }
+
+  if (!meta.title && fallbackTitle) meta.title = fallbackTitle;
+
+  return meta;
+}
+
+/** Extract the value of a named HTML attribute from a raw attribute string. */
+function attrValue(attrs: string, name: string): string | null {
+  const re = new RegExp(`${name}=(?:"([^"]*)"|'([^']*)'|(\\S+))`, "i");
+  const m = attrs.match(re);
+  if (!m) return null;
+  return (m[1] ?? m[2] ?? m[3] ?? "").trim() || null;
+}
+
+// ─── HTMLRewriter-based path (Cloudflare Workers / workerd) ─────────────────
+
+async function parseOGWithRewriter(
+  response: Response,
+  meta: OGMeta,
+): Promise<string> {
+  let titleBuffer = "";
+
+  await new HTMLRewriter()
+    .on("title", {
+      text(chunk) {
+        titleBuffer += chunk.text;
+      },
+    })
+    .on("meta", {
+      element(el) {
+        const prop = el.getAttribute("property") ?? el.getAttribute("name");
+        const content = el.getAttribute("content");
+        if (!prop || !content) return;
+
+        switch (prop) {
+          case "og:title":
+          case "twitter:title":
+            if (!meta.title) meta.title = content;
+            break;
+          case "og:description":
+          case "twitter:description":
+          case "description":
+            if (!meta.description) meta.description = content;
+            break;
+          case "og:image":
+          case "og:image:secure_url":
+          case "twitter:image":
+            if (!meta.image) meta.image = content;
+            break;
+          case "og:url":
+            if (!meta.url) meta.url = content;
+            break;
+          case "og:video":
+          case "og:video:url":
+          case "og:video:secure_url":
+          case "twitter:player":
+            if (!meta.video) meta.video = content;
+            break;
+        }
+      },
+    })
+    .on("link[rel='canonical']", {
+      element(el) {
+        if (!meta.url) meta.url = el.getAttribute("href");
+      },
+    })
+    .transform(response)
+    .arrayBuffer();
+
+  return titleBuffer;
+}
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
 export default async function getOG(url: string): Promise<OGMeta> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -19,72 +155,17 @@ export default async function getOG(url: string): Promise<OGMeta> {
     video: null,
   };
 
-  let titleBuffer = "";
-  let inTitle = false;
+  if (typeof HTMLRewriter !== "undefined") {
+    // Native path — Cloudflare Workers / workerd
+    const titleBuffer = await parseOGWithRewriter(response, meta);
+    if (!meta.title && titleBuffer) meta.title = titleBuffer.trim();
+  } else {
+    // Fallback path — Node.js / Bun / any non-CF runtime
+    // Read body as text and parse with regex — no WASM, no extra deps.
+    const html = await response.text();
+    Object.assign(meta, parseOGFromHTML(html));
+  }
 
-  await new HTMLRewriter()
-    .on("title", {
-      text(chunk) {
-        titleBuffer += chunk.text;
-        if (chunk.lastInTextNode) inTitle = false;
-      },
-    })
-    .on("meta", {
-      element(el) {
-        const prop = el.getAttribute("property") ?? el.getAttribute("name");
-        const content = el.getAttribute("content");
-        if (!prop || !content) return;
-
-        switch (prop) {
-          // Title: og > twitter > <title>
-          case "og:title":
-          case "twitter:title":
-            if (!meta.title) meta.title = content;
-            break;
-
-          // Description: og > twitter > meta[name=description]
-          case "og:description":
-          case "twitter:description":
-            if (!meta.description) meta.description = content;
-            break;
-          case "description":
-            if (!meta.description) meta.description = content;
-            break;
-
-          // Image: og > twitter
-          case "og:image":
-          case "og:image:secure_url":
-          case "twitter:image":
-            if (!meta.image) meta.image = content;
-            break;
-
-          // URL
-          case "og:url":
-            if (!meta.url) meta.url = content;
-            break;
-
-          // Video: og > twitter
-          case "og:video":
-          case "og:video:url":
-          case "og:video:secure_url":
-          case "twitter:player":
-            if (!meta.video) meta.video = content;
-            break;
-        }
-      },
-    })
-    .on("link[rel='canonical']", {
-      element(el) {
-        if (!meta.url) meta.url = el.getAttribute("href");
-      },
-    })
-    .transform(response)
-    .arrayBuffer(); // must consume the body
-
-  // Fall back <title> tag if og:title / twitter:title not found
-  if (!meta.title && titleBuffer) meta.title = titleBuffer.trim();
-
-  // Fall back to the original URL if nothing found
   if (!meta.url) meta.url = url;
 
   return meta;
