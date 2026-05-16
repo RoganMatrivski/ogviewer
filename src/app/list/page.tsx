@@ -65,50 +65,52 @@ export default async function ListLinePerUrl({
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto px-4 pb-4">
       {/* <ModeToggle /> */}
 
-      {/* Top controls: file input + filter + pagination */}
-      <form method="GET" action="/list" className="mb-4 space-y-2">
-        {/* Row 1: file URL + filter inputs */}
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            type="text"
-            name="list"
-            defaultValue={listUrl}
-            placeholder="File URL (one URL per line)…"
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <input
-            type="text"
-            name="filter"
-            defaultValue={filterQuery}
-            placeholder="Filter URLs…"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-56"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
-          >
-            Go
-          </button>
-        </div>
+      {/* Top controls: file input + filter + pagination - STICKY */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pt-4 pb-4 mb-4 border-b">
+        <form method="GET" action="/list" className="space-y-2">
+          {/* Row 1: file URL + filter inputs */}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              name="list"
+              defaultValue={listUrl}
+              placeholder="File URL (one URL per line)…"
+              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            <input
+              type="text"
+              name="filter"
+              defaultValue={filterQuery}
+              placeholder="Filter URLs…"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-56"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+            >
+              Go
+            </button>
+          </div>
 
-        {/* Row 2: pagination + result count */}
-        <div className="flex items-center justify-between gap-2">
-          <Pagination
-            currentPage={page}
-            itemsPerPage={itemsPerPage}
-            totalItemCount={filteredList.length}
-            pageLinkGet={(p) => newPageURLBuilder(p)}
-          />
-          {filterQuery && (
-            <span className="shrink-0 text-sm text-muted-foreground">
-              {filteredList.length} / {list.length} URLs
-            </span>
-          )}
-        </div>
-      </form>
+          {/* Row 2: pagination + result count */}
+          <div className="flex items-center justify-between gap-2">
+            <Pagination
+              currentPage={page}
+              itemsPerPage={itemsPerPage}
+              totalItemCount={filteredList.length}
+              pageLinkGet={(p) => newPageURLBuilder(p)}
+            />
+            {filterQuery && (
+              <span className="shrink-0 text-sm text-muted-foreground">
+                {filteredList.length} / {list.length} URLs
+              </span>
+            )}
+          </div>
+        </form>
+      </div>
 
       {filteredList.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">
@@ -123,15 +125,6 @@ export default async function ListLinePerUrl({
           ))}
         </div>
       )}
-
-      <div className="my-2">
-        <Pagination
-          currentPage={page}
-          itemsPerPage={itemsPerPage}
-          totalItemCount={filteredList.length}
-          pageLinkGet={(p) => newPageURLBuilder(p)}
-        />
-      </div>
 
       <UrlsDialog className="fixed bottom-5 right-5" />
     </div>
