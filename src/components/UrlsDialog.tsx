@@ -1,11 +1,11 @@
 "use client";
 
-import { useUrlStore } from "@/state/urlStore";
 import { Cross, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { twMerge } from "tailwind-merge";
-import CopyButton from "./CopyButton";
+import { useUrlStore } from "@/state/urlStore";
 import ConfirmationDialog from "./ConfirmationDialog";
+import CopyButton from "./CopyButton";
 
 interface UrlsDialogProps {
 	className?: string;

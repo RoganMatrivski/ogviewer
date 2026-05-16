@@ -1,3 +1,4 @@
+import type { VariantProps } from "class-variance-authority";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -10,7 +11,6 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, type buttonVariants } from "./ui/button";
-import type { VariantProps } from "class-variance-authority";
 
 interface ConfirmationDialogProps {
 	label: string;

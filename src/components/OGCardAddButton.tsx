@@ -1,10 +1,10 @@
 "use client";
 
+import * as R from "ramda";
 import { twMerge } from "tailwind-merge";
-import { Button } from "./ui/button";
 
 import { useUrlStore } from "@/state/urlStore";
-import * as R from "ramda";
+import { Button } from "./ui/button";
 
 interface OGCardAddButtonProps {
 	url: string;

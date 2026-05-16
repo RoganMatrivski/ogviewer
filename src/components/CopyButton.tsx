@@ -1,8 +1,8 @@
 "use client";
 
+import { Check, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { Copy, Check, X } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface CopyButtonProps {

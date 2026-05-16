@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import * as R from "ramda";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 interface UrlState {
 	urls: string[];
