@@ -28,7 +28,7 @@ function parseOGFromHTML(html: string): OGMeta {
 		const content = attrValue(attrs, "content");
 		if (!prop || !content) continue;
 
-		switch (prop) {
+		switch (prop.toLowerCase()) {
 			case "og:title":
 			case "twitter:title":
 				if (!meta.title) meta.title = content;
@@ -39,8 +39,10 @@ function parseOGFromHTML(html: string): OGMeta {
 				if (!meta.description) meta.description = content;
 				break;
 			case "og:image":
+			case "og:image:url":
 			case "og:image:secure_url":
 			case "twitter:image":
+			case "twitter:image:src":
 				if (!meta.image) meta.image = content;
 				break;
 			case "og:url":
@@ -76,7 +78,17 @@ function attrValue(attrs: string, name: string): string | null {
 	const re = new RegExp(`${name}=(?:"([^"]*)"|'([^']*)'|(\\S+))`, "i");
 	const m = attrs.match(re);
 	if (!m) return null;
-	return (m[1] ?? m[2] ?? m[3] ?? "").trim() || null;
+	// Handle HTML entities in attributes (simplistic)
+	let val = (m[1] ?? m[2] ?? m[3] ?? "").trim();
+	if (val.includes("&")) {
+		val = val
+			.replace(/&amp;/g, "&")
+			.replace(/&quot;/g, '"')
+			.replace(/&apos;/g, "'")
+			.replace(/&lt;/g, "<")
+			.replace(/&gt;/g, ">");
+	}
+	return val || null;
 }
 
 // ─── HTMLRewriter-based path (Cloudflare Workers / workerd) ─────────────────
@@ -99,7 +111,7 @@ async function parseOGWithRewriter(
 				const content = el.getAttribute("content");
 				if (!prop || !content) return;
 
-				switch (prop) {
+				switch (prop.toLowerCase()) {
 					case "og:title":
 					case "twitter:title":
 						if (!meta.title) meta.title = content;
@@ -110,8 +122,10 @@ async function parseOGWithRewriter(
 						if (!meta.description) meta.description = content;
 						break;
 					case "og:image":
+					case "og:image:url":
 					case "og:image:secure_url":
 					case "twitter:image":
+					case "twitter:image:src":
 						if (!meta.image) meta.image = content;
 						break;
 					case "og:url":
@@ -143,8 +157,10 @@ export default async function getOG(url: string): Promise<OGMeta> {
 	const response = await fetch(url, {
 		headers: {
 			"User-Agent":
-				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+				"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+			Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 			"Accept-Language": "en-US,en;q=0.9",
+			Referer: "https://www.google.com/",
 		},
 	});
 
