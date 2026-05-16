@@ -162,7 +162,9 @@ export default async function getOG(url: string): Promise<OGMeta> {
   } else {
     // Fallback path — Node.js / Bun / any non-CF runtime
     // Read body as text and parse with regex — no WASM, no extra deps.
-    const html = await response.text();
+    // Limit processing to the first 500KB to avoid regex performance issues on huge files.
+    const text = await response.text();
+    const html = text.slice(0, 512 * 1024);
     Object.assign(meta, parseOGFromHTML(html));
   }
 

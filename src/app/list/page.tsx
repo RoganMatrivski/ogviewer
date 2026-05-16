@@ -61,7 +61,7 @@ export default async function ListLinePerUrl({
       }
     });
     urlParams.set("page", String(targetPage));
-    return `list?${urlParams.toString()}`;
+    return `/list?${urlParams.toString()}`;
   };
 
   return (
@@ -69,7 +69,7 @@ export default async function ListLinePerUrl({
       {/* <ModeToggle /> */}
 
       {/* Top controls: file input + filter + pagination */}
-      <form method="GET" action="list" className="mb-4 space-y-2">
+      <form method="GET" action="/list" className="mb-4 space-y-2">
         {/* Row 1: file URL + filter inputs */}
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -116,8 +116,8 @@ export default async function ListLinePerUrl({
         </p>
       ) : (
         <div className="grid gap-4 lg:grid-cols-4 sm:grid-cols-2">
-          {items.map((x) => (
-            <Suspense key={x} fallback={<OGCard.Loading />}>
+          {items.map((x, idx) => (
+            <Suspense key={`${page}-${idx}-${x}`} fallback={<OGCard.Loading />}>
               <OGCard.Wrapper url={x} />
             </Suspense>
           ))}
