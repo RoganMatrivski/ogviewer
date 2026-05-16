@@ -1,5 +1,6 @@
 "use server";
 
+import Image from "next/image";
 import {
   Card,
   CardAction,
@@ -16,7 +17,6 @@ import getOG from "@/actions/FetchOG";
 import { AlertTriangle } from "lucide-react";
 import OGCardAddButton from "./OGCardAddButton";
 import OGCardContent from "./OGCardContent";
-import OGCardImage from "./OGCardImage";
 
 type OGCardProps = {
   meta: OGMeta;
@@ -28,12 +28,27 @@ export default async function OGCard({ meta }: OGCardProps) {
   return (
     <Card className="py-0 pb-6 overflow-hidden w-min-60 h-full bg-white text-black dark:bg-gray-900 dark:text-white">
       {meta.image ? (
-        <OGCardImage src={preview} alt={meta.title || "Website preview"} />
+        <div className="overflow-hidden h-[40vh]">
+          <div className="relative w-full h-full overflow-hidden">
+            <Image
+              src={preview}
+              alt="Website preview"
+              className="absolute inset-0 w-full h-full object-cover blur-lg brightness-50"
+              width="480"
+              height="360"
+            />
+            <Image
+              src={preview}
+              alt="Website preview"
+              className="relative w-full h-full object-cover transition-all duration-500 hover:object-contain"
+              width="480"
+              height="360"
+            />
+          </div>
+        </div>
       ) : (
-        <div className="overflow-hidden h-[40vh] flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-          <span className="text-2xl font-semibold px-4 text-center line-clamp-3">
-            {meta.title}
-          </span>
+        <div className="overflow-hidden h-[40vh] flex items-center justify-center">
+          <span className="text-2xl">{meta.title}</span>
         </div>
       )}
       <CardHeader>
