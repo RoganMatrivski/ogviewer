@@ -192,7 +192,6 @@ export default async function getOG(url: string): Promise<OGMeta> {
 	}
 
 	// Final fallbacks for missing title
-	if (!meta.title) meta.title = "Untitled Page";
 	if (!meta.url) meta.url = url;
 
 	return meta;
