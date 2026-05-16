@@ -140,7 +140,14 @@ async function parseOGWithRewriter(
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default async function getOG(url: string): Promise<OGMeta> {
-	const response = await fetch(url);
+	const response = await fetch(url, {
+		headers: {
+			"User-Agent":
+				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+			"Accept-Language": "en-US,en;q=0.9",
+		},
+	});
+
 	if (!response.ok) {
 		throw new Error(
 			`Failed to fetch: ${response.status} ${response.statusText}`,
@@ -168,6 +175,8 @@ export default async function getOG(url: string): Promise<OGMeta> {
 		Object.assign(meta, parseOGFromHTML(html));
 	}
 
+	// Final fallbacks for missing title
+	if (!meta.title) meta.title = "Untitled Page";
 	if (!meta.url) meta.url = url;
 
 	return meta;
