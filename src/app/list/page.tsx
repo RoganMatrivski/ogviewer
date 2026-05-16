@@ -129,7 +129,7 @@ export default async function ListLinePerUrl({
 						</button>
 					</div>
 
-					{/* Row 2: pagination + result count */}
+					{/* Row 2: pagination + result count + URLs button */}
 					<div className="flex items-center justify-between gap-2">
 						<Pagination
 							currentPage={page}
@@ -137,11 +137,14 @@ export default async function ListLinePerUrl({
 							totalItemCount={filteredList.length}
 							pageLinkGet={(p) => newPageURLBuilder(p)}
 						/>
-						{filterQuery && (
-							<span className="shrink-0 text-sm text-muted-foreground">
-								{filteredList.length} / {list.length} URLs
-							</span>
-						)}
+						<div className="flex items-center gap-4">
+							{filterQuery && (
+								<span className="shrink-0 text-sm text-muted-foreground">
+									{filteredList.length} / {list.length} URLs
+								</span>
+							)}
+							<UrlsDialog />
+						</div>
 					</div>
 				</form>
 			</div>
@@ -159,8 +162,6 @@ export default async function ListLinePerUrl({
 					))}
 				</div>
 			)}
-
-			<UrlsDialog className="fixed bottom-5 right-5" />
 		</div>
 	);
 }

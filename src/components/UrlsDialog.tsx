@@ -24,7 +24,7 @@ export default function UrlsDialog({ className }: UrlsDialogProps) {
 				<button
 					type="button"
 					className={twMerge(
-						"cursor-pointer inline-flex h-[3rem] items-center justify-center rounded bg-background outline-1 outline-black dark:outline-white px-[15px] font-medium leading-none select-none",
+						"rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 cursor-pointer select-none",
 						className,
 					)}
 				>
