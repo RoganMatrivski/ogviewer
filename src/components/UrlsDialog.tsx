@@ -32,10 +32,10 @@ export default function UrlsDialog({ className }: UrlsDialogProps) {
 				</button>
 			</Dialog.Trigger>
 			<Dialog.Portal>
-				<Dialog.Overlay className="fixed inset-0 bg-background/50 data-[state=open]:animate-overlayShow" />
+				<Dialog.Overlay className="fixed inset-0 bg-background/50 data-[state=open]:animate-overlayShow z-[100]" />
 				<Dialog.Content
 					aria-describedby={undefined}
-					className="fixed left-1/2 top-1/2 max-h-[85vh] w-[90vw] max-w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-background p-[25px] shadow-[var(--shadow-6)] focus:outline-none data-[state=open]:animate-contentShow"
+					className="fixed left-1/2 top-1/2 max-h-[85vh] w-[90vw] max-w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-background p-[25px] shadow-[var(--shadow-6)] focus:outline-none data-[state=open]:animate-contentShow z-[101]"
 				>
 					<Dialog.Title className="m-0 text-[17px] font-medium text-mauve12">
 						URL list
