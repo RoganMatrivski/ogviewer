@@ -1,6 +1,6 @@
 "use client";
 
-import { Cross, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { twMerge } from "tailwind-merge";
 import { useUrlStore } from "@/state/urlStore";

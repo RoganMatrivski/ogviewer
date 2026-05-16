@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
 import { Suspense } from "react";
-import { ModeToggle } from "@/components/ModeToggle";
 import OGCard from "@/components/OGCard";
 import { Pagination } from "@/components/pagination";
 import UrlsDialog from "@/components/UrlsDialog";
@@ -47,7 +45,6 @@ export default async function ListLinePerUrl({
 						name="list"
 						placeholder="Paste list URL here..."
 						className="w-full rounded border border-input bg-background px-4 py-2"
-						autoFocus
 					/>
 					<button
 						type="submit"

@@ -1,3 +1,3 @@
-export default function SinglePageCards(urls: string[]) {
+export default function SinglePageCards(_urls: string[]) {
 	return <></>;
 }

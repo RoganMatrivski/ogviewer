@@ -3,12 +3,10 @@
 import { AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import getOG from "@/actions/FetchOG";
 import type { OGMeta } from "@/types/OpenGraph";
 import { Button } from "./ui/button";
 import {
 	Card,
-	CardAction,
 	CardContent,
 	CardDescription,
 	CardFooter,
