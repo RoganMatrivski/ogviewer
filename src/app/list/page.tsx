@@ -20,21 +20,54 @@ export default async function ListLinePerUrl({
   const filterQuery = qGetter("filter")?.trim() ?? "";
 
   let list: string[] = [];
-  try {
-    const res = await fetch(listUrl);
-    if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
-    const text = await res.text();
-    list = text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
-  } catch (err) {
-    console.error("Error fetching list:", err);
-    list = [];
+  if (listUrl) {
+    try {
+      const res = await fetch(listUrl);
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
+      const text = await res.text();
+      list = text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    } catch (err) {
+      console.error("Error fetching list:", err);
+      list = [];
+    }
   }
+if (!listUrl) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[90vh] px-4">
+      <form method="GET" action="/list" className="w-full max-w-md flex flex-col gap-4">
+        <input
+          type="text"
+          name="list"
+          placeholder="Paste list URL here..."
+          className="w-full rounded border border-input bg-background px-4 py-2"
+          autoFocus
+        />
+        <button
+          type="submit"
+          className="w-full rounded bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
+        >
+          Load
+        </button>
+      </form>
+    </div>
+  );
+}
 
   if (list.length <= 0)
-    return NextResponse.json({ error: "Invalid list" }, { status: 400 });
+    return (
+      <div className="container mx-auto p-16 text-center">
+        <h2 className="text-2xl font-bold mb-4">Invalid or Empty List</h2>
+        <p className="mb-8 text-muted-foreground">
+          We couldn't find any URLs at: {listUrl}
+        </p>
+        <a href="/list" className="text-primary hover:underline font-medium">
+          Try another URL
+        </a>
+      </div>
+    );
 
   const filteredList = filterQuery
     ? list.filter((url) =>
