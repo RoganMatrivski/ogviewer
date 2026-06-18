@@ -20,7 +20,11 @@ export default async function ListLinePerUrl({
 	let list: string[] = [];
 	if (listUrl) {
 		try {
-			const res = await fetch(listUrl);
+		  const res = await fetch(listUrl, {
+        headers: {
+          Accept: "text/plain",
+        },
+      });
 			if (!res.ok) throw new Error(`Failed to fetch: ${res.statusText}`);
 			const text = await res.text();
 			list = text
