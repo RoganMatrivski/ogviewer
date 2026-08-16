@@ -1,15 +1,25 @@
-import type { OGMeta } from "@/types/OpenGraph";
-import { getOGFast } from "./FetchOG-Fast";
-import { getOGWithPuppeteer } from "./FetchOG-Puppeteer";
+"use server";
 
-export * from "./FetchOG-Fast";
-export * from "./FetchOG-Parser";
-export * from "./FetchOG-Puppeteer";
-// Re-export discrete step modules for direct usage
-export * from "./FetchOG-Twitter";
+import type { OGMeta } from "@/types/OpenGraph";
+import { getOGFast as fetchOGFast } from "./FetchOG-Fast";
+import {
+	type FetchOGPuppeteerOptions,
+	getOGWithPuppeteer as fetchOGWithPuppeteer,
+} from "./FetchOG-Puppeteer";
+
+export async function getOGFast(url: string): Promise<OGMeta> {
+	return fetchOGFast(url);
+}
+
+export async function getOGWithPuppeteer(
+	url: string,
+	options?: FetchOGPuppeteerOptions,
+): Promise<OGMeta> {
+	return fetchOGWithPuppeteer(url, options);
+}
 
 /**
- * Main OpenGraph fetcher.
+ * Main OpenGraph fetcher Server Action.
  * Tries fast HTTP fetch first; if title or image is missing, falls back to Puppeteer browser rendering.
  */
 export async function getOG(url: string): Promise<OGMeta> {

@@ -4,17 +4,62 @@ import puppeteer, { type Browser } from "@cloudflare/puppeteer";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { OGMeta } from "@/types/OpenGraph";
 
+/** Default cache duration in seconds: 24 hours (86,400s). Minimum Cloudflare KV TTL is 60s. */
+const DEFAULT_OG_PUPPETEER_CACHE_TTL = 86400;
+
+export interface FetchOGPuppeteerOptions {
+	/** Custom cache TTL in seconds for KV caching. Defaults to 86400 (24h). Min 60s. */
+	cacheTtlSeconds?: number;
+	/** Force bypassing KV cache reading (will still store new result if KV is available). */
+	bypassCache?: boolean;
+}
+
 /**
  * Fetches OpenGraph metadata using Cloudflare Workers Browser Rendering (Puppeteer binding).
- * Uses `getCloudflareContext()` to retrieve the `BROWSER` binding defined in `wrangler.toml`.
+ * Caches results in the Cloudflare KV namespace `OG_CACHE` if available.
  */
-export async function getOGWithPuppeteer(targetUrl: string): Promise<OGMeta> {
+export async function getOGWithPuppeteer(
+	targetUrl: string,
+	options?: FetchOGPuppeteerOptions,
+): Promise<OGMeta> {
+	const ttlSeconds =
+		options?.cacheTtlSeconds ??
+		(process.env.OG_CACHE_TTL_SECONDS
+			? Number.parseInt(process.env.OG_CACHE_TTL_SECONDS, 10)
+			: DEFAULT_OG_PUPPETEER_CACHE_TTL);
+
+	// Safe retrieval of Cloudflare env bindings
+	let cfEnv: CloudflareEnv | undefined;
+	try {
+		cfEnv = getCloudflareContext().env as unknown as CloudflareEnv;
+	} catch {
+		// Environment bindings not available (e.g. non-Workers runtime)
+	}
+
+	const kv = cfEnv?.OG_CACHE;
+	const cacheKey = `og:puppeteer:${targetUrl}`;
+
+	// ─── 1. KV Cache Read ───────────────────────────────────────────────────
+	if (kv && !options?.bypassCache) {
+		try {
+			const cached = await kv.get<OGMeta>(cacheKey, "json");
+			if (cached) {
+				console.log(`[FetchOG-Puppeteer] KV cache hit for ${targetUrl}`);
+				return cached;
+			}
+		} catch (kvReadErr) {
+			console.warn(
+				`[FetchOG-Puppeteer] Failed to read KV cache for ${targetUrl}:`,
+				kvReadErr,
+			);
+		}
+	}
+
+	// ─── 2. Puppeteer Execution ─────────────────────────────────────────────
 	let browser: Browser | null = null;
 
 	try {
-		// Retrieve Cloudflare environment bindings
-		const { env } = getCloudflareContext();
-		const browserBinding = (env as unknown as CloudflareEnv)?.BROWSER;
+		const browserBinding = cfEnv?.BROWSER;
 
 		if (!browserBinding) {
 			throw new Error(
@@ -57,7 +102,6 @@ export async function getOGWithPuppeteer(targetUrl: string): Promise<OGMeta> {
 		const meta = await page.evaluate(() => {
 			const getMeta = (names: string[]): string | null => {
 				for (const name of names) {
-					// Query exact attribute or lowercased version
 					const el = document.querySelector(
 						`meta[property="${name}" i], meta[name="${name}" i]`,
 					);
@@ -109,6 +153,25 @@ export async function getOGWithPuppeteer(targetUrl: string): Promise<OGMeta> {
 
 		if (!meta.url) {
 			meta.url = targetUrl;
+		}
+
+		// ─── 3. KV Cache Write ──────────────────────────────────────────────
+		if (kv && meta && (meta.title || meta.image)) {
+			try {
+				// Cloudflare KV requires minimum expirationTtl of 60 seconds
+				const effectiveTtl = Math.max(60, ttlSeconds);
+				await kv.put(cacheKey, JSON.stringify(meta), {
+					expirationTtl: effectiveTtl,
+				});
+				console.log(
+					`[FetchOG-Puppeteer] Cached result in KV for ${targetUrl} (TTL: ${effectiveTtl}s)`,
+				);
+			} catch (kvWriteErr) {
+				console.warn(
+					`[FetchOG-Puppeteer] Failed to write KV cache for ${targetUrl}:`,
+					kvWriteErr,
+				);
+			}
 		}
 
 		return meta;

@@ -9,6 +9,10 @@ compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 [browser]
 binding = "BROWSER"
 
+[[kv_namespaces]]
+binding = "OG_CACHE"
+id = "og_cache_kv"
+
 
 # -----------------------------------------------------------------------------
 # Static Assets
