@@ -12,6 +12,26 @@ export interface FetchOGPuppeteerOptions {
 	cacheTtlSeconds?: number;
 	/** Force bypassing KV cache reading (will still store new result if KV is available). */
 	bypassCache?: boolean;
+	/** Time to wait in milliseconds after page navigation before scraping metadata. */
+	waitForMs?: number;
+	/** Time to wait in milliseconds after page navigation before scraping metadata (alias for waitForMs). */
+	waitMs?: number;
+	/** Time to wait in seconds after page navigation before scraping metadata. */
+	waitForSeconds?: number;
+	/** CSS selector to wait for before scraping metadata (e.g. "meta[property='og:title']" or "#content"). */
+	waitForSelector?: string;
+	/** CSS selector to wait for before scraping metadata (alias for waitForSelector). */
+	waitSelector?: string;
+	/** Maximum time in milliseconds to wait for the CSS selector. Defaults to 10000 (10s). */
+	waitForSelectorTimeoutMs?: number;
+	/** JavaScript function body or expression string to wait for in page context (e.g. "document.querySelector('title')?.innerText.length > 0"). */
+	waitForFunction?: string;
+	/** Maximum time in milliseconds to wait for the custom function. Defaults to 10000 (10s). */
+	waitForFunctionTimeoutMs?: number;
+	/** Wait until network becomes idle before scraping metadata. */
+	waitForNetworkIdle?: boolean | { idleTime?: number; timeout?: number };
+	/** Wait until navigation event condition (e.g. 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2'). Defaults to 'domcontentloaded'. */
+	waitUntil?: "load" | "domcontentloaded" | "networkidle0" | "networkidle2";
 }
 
 /**
@@ -94,9 +114,67 @@ export async function getOGWithPuppeteer(
 
 		// Navigate to target URL
 		await page.goto(targetUrl, {
-			waitUntil: "domcontentloaded",
+			waitUntil: options?.waitUntil ?? "domcontentloaded",
 			timeout: 15000,
 		});
+
+		// ─── Optional Waits ───
+		// 1. Wait for CSS selector if specified
+		const selector = options?.waitForSelector ?? options?.waitSelector;
+		if (selector) {
+			const selectorTimeout = options?.waitForSelectorTimeoutMs ?? 10000;
+			try {
+				await page.waitForSelector(selector, { timeout: selectorTimeout });
+			} catch (selectorErr) {
+				console.warn(
+					`[FetchOG-Puppeteer] Timeout waiting for selector "${selector}" on ${targetUrl}:`,
+					selectorErr,
+				);
+			}
+		}
+
+		// 2. Wait for custom JS function / expression if specified
+		if (options?.waitForFunction) {
+			const fnTimeout = options?.waitForFunctionTimeoutMs ?? 10000;
+			try {
+				await page.waitForFunction(options.waitForFunction, {
+					timeout: fnTimeout,
+				});
+			} catch (fnErr) {
+				console.warn(
+					`[FetchOG-Puppeteer] Timeout waiting for function on ${targetUrl}:`,
+					fnErr,
+				);
+			}
+		}
+
+		// 3. Wait for network idle if requested
+		if (options?.waitForNetworkIdle) {
+			try {
+				const idleOptions =
+					typeof options.waitForNetworkIdle === "object"
+						? options.waitForNetworkIdle
+						: { idleTime: 500, timeout: 10000 };
+				await page.waitForNetworkIdle(idleOptions);
+			} catch (netErr) {
+				console.warn(
+					`[FetchOG-Puppeteer] Timeout waiting for network idle on ${targetUrl}:`,
+					netErr,
+				);
+			}
+		}
+
+		// 4. Optional delay (in milliseconds or seconds) before scraping metadata
+		const waitMs =
+			options?.waitForMs ??
+			options?.waitMs ??
+			(options?.waitForSeconds !== undefined
+				? options.waitForSeconds * 1000
+				: 0);
+
+		if (waitMs > 0) {
+			await new Promise((resolve) => setTimeout(resolve, waitMs));
+		}
 
 		// Extract OpenGraph and meta tags inside browser context
 		const meta = await page.evaluate(() => {
