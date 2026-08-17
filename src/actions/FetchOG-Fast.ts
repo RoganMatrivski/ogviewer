@@ -5,19 +5,34 @@ import { fetchTwitterResponse, isTwitterLink } from "./FetchOG-Twitter";
 
 const fetch = fetchRetry(global.fetch);
 
+function buildHeaders(customHeaders?: HeadersInit): Headers {
+	const defaultHeaders: Record<string, string> = {
+		"User-Agent":
+			"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+		Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		"Accept-Language": "en-US,en;q=0.9",
+		Referer: "https://www.google.com/",
+	};
+
+	const merged = new Headers(defaultHeaders);
+	if (customHeaders) {
+		const custom = new Headers(customHeaders);
+		custom.forEach((value, key) => {
+			merged.set(key, value);
+		});
+	}
+	return merged;
+}
+
 /** Fetch raw HTTP response for a URL (handling Twitter/X redirection if applicable) */
-export async function fetchResponse(url: string): Promise<Response> {
+export async function fetchResponse(
+	url: string,
+	headers?: HeadersInit,
+): Promise<Response> {
 	const response = isTwitterLink(url)
-		? await fetchTwitterResponse(url)
+		? await fetchTwitterResponse(url, headers)
 		: await fetch(url, {
-				headers: {
-					"User-Agent":
-						"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-					Accept:
-						"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-					"Accept-Language": "en-US,en;q=0.9",
-					Referer: "https://www.google.com/",
-				},
+				headers: buildHeaders(headers),
 			});
 
 	if (!response.ok) {
@@ -30,8 +45,11 @@ export async function fetchResponse(url: string): Promise<Response> {
 }
 
 /** Fetches OpenGraph metadata using fast HTTP fetch + HTMLRewriter/regex parsing */
-export async function getOGFast(url: string): Promise<OGMeta> {
-	const response = await fetchResponse(url);
+export async function getOGFast(
+	url: string,
+	headers?: HeadersInit,
+): Promise<OGMeta> {
+	const response = await fetchResponse(url, headers);
 
 	const meta: OGMeta = {
 		title: null,

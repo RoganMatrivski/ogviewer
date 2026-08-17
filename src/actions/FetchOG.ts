@@ -1,14 +1,20 @@
 "use server";
 
 import type { OGMeta } from "@/types/OpenGraph";
+import { getCookiesWithPuppeteer } from "./FetchCookies-Puppeteer";
 import { getOGFast as fetchOGFast } from "./FetchOG-Fast";
 import {
 	type FetchOGPuppeteerOptions,
 	getOGWithPuppeteer as fetchOGWithPuppeteer,
 } from "./FetchOG-Puppeteer";
 
-export async function getOGFast(url: string): Promise<OGMeta> {
-	return fetchOGFast(url);
+import flow from "./Flowpick";
+
+export async function getOGFast(
+	url: string,
+	headers?: HeadersInit,
+): Promise<OGMeta> {
+	return fetchOGFast(url, headers);
 }
 
 export async function getOGWithPuppeteer(
@@ -23,42 +29,26 @@ export async function getOGWithPuppeteer(
  * Tries fast HTTP fetch first; if title or image is missing, falls back to Puppeteer browser rendering.
  */
 export async function getOG(url: string): Promise<OGMeta> {
-	try {
-		const fastMeta = await getOGFast(url);
+	const host = new URL(url).hostname;
 
-		// If fast fetch found title and image (or video), return immediately
-		if (fastMeta.title && (fastMeta.image || fastMeta.video)) {
-			return fastMeta;
-		}
+	let headers: HeadersInit = {};
 
-		// If fast fetch returned incomplete metadata, attempt Puppeteer browser rendering
-		console.log(
-			`[getOG] Incomplete metadata from fast fetch for ${url}. Trying Puppeteer browser rendering...`,
+	await flow(url, async (_url: string) => {
+		const { cookieHeader, userAgent } = await getCookiesWithPuppeteer(
+			`https://${host}`,
+			{
+				waitForSelector: ".page-home",
+			},
 		);
-		const puppeteerMeta = await getOGWithPuppeteer(url);
-		return {
-			title: puppeteerMeta.title || fastMeta.title,
-			description: puppeteerMeta.description || fastMeta.description,
-			image: puppeteerMeta.image || fastMeta.image,
-			url: puppeteerMeta.url || fastMeta.url || url,
-			video: puppeteerMeta.video || fastMeta.video,
+
+		headers = {
+			Cookie: cookieHeader,
+			"User-Agent": userAgent,
 		};
-	} catch (fastErr) {
-		console.warn(
-			`[getOG] Fast fetch failed for ${url}:`,
-			fastErr,
-			`Attempting Puppeteer browser rendering...`,
-		);
-		try {
-			return await getOGWithPuppeteer(url);
-		} catch (puppeteerErr) {
-			console.error(
-				`[getOG] Puppeteer rendering also failed for ${url}:`,
-				puppeteerErr,
-			);
-			throw fastErr;
-		}
-	}
+	});
+
+	console.log(`Fetching ${url} with ${JSON.stringify(headers)}`);
+	return getOGFast(url, headers);
 }
 
 export default getOG;
