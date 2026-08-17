@@ -11,7 +11,7 @@ binding = "BROWSER"
 
 [[kv_namespaces]]
 binding = "OG_CACHE"
-id = "og_cache_kv"
+id = "6b8c7482828b45a18e420dd5f5352c35"
 
 
 # -----------------------------------------------------------------------------
