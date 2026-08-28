@@ -1,3 +1,6 @@
+// biome-ignore-all format: obfuscated file
+// biome-ignore-all lint: obfuscated file
+
 /*
   I swear to God this ain't a virus.
   export default async function pick(url, cb1, cb2 = (s) => {}) {
