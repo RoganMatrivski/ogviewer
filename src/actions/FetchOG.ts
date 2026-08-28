@@ -1,54 +1,54 @@
 "use server";
 
 import type { OGMeta } from "@/types/OpenGraph";
-import { getCookiesWithPuppeteer } from "./FetchCookies-Puppeteer";
 import { getOGFast as fetchOGFast } from "./FetchOG-Fast";
-import {
-	type FetchOGPuppeteerOptions,
-	getOGWithPuppeteer as fetchOGWithPuppeteer,
-} from "./FetchOG-Puppeteer";
-
 import flow from "./Flowpick";
 
 export async function getOGFast(
-	url: string,
-	headers?: HeadersInit,
+  url: string,
+  headers?: HeadersInit,
 ): Promise<OGMeta> {
-	return fetchOGFast(url, headers);
+  return fetchOGFast(url, headers);
 }
 
-export async function getOGWithPuppeteer(
-	url: string,
-	options?: FetchOGPuppeteerOptions,
-): Promise<OGMeta> {
-	return fetchOGWithPuppeteer(url, options);
-}
 
 /**
  * Main OpenGraph fetcher Server Action.
  * Tries fast HTTP fetch first; if title or image is missing, falls back to Puppeteer browser rendering.
  */
 export async function getOG(url: string): Promise<OGMeta> {
-	const host = new URL(url).hostname;
+  const host = new URL(url).hostname;
 
-	let headers: HeadersInit = {};
+  let headers: HeadersInit = {};
 
-	await flow(url, async (_url: string) => {
-		const { cookieHeader, userAgent } = await getCookiesWithPuppeteer(
-			`https://${host}`,
-			{
-				waitForSelector: ".page-home",
-			},
-		);
+  await flow(url, async (_url: string) => {
+    const res = await fetch(`https://${host}/age-gate`, {
+      method: "POST",
+    });
 
-		headers = {
-			Cookie: cookieHeader,
-			"User-Agent": userAgent,
-		};
-	});
+    type AgeGateResponse = {
+      blocked: boolean,
+      redirect: string,
+    }
 
-	console.log(`Fetching ${url} with ${JSON.stringify(headers)}`);
-	return getOGFast(url, headers);
+    const res_json = await res.json<AgeGateResponse>()
+
+    if (res_json.blocked) {
+      throw new Error("Age gate blocked this URL");
+    }
+
+    const cookies = res.headers.getSetCookie();
+
+    const cookieHeader = cookies
+      .map((c) => c.split(";")[0].trim())
+      .filter(Boolean)
+      .join("; ");
+
+    headers = cookieHeader ? { Cookie: cookieHeader } : {};
+  });
+
+  console.log(`Fetching ${url} with ${JSON.stringify(headers)}`);
+  return getOGFast(url, headers);
 }
 
 export default getOG;

@@ -6,14 +6,6 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-03-24"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
-[browser]
-binding = "BROWSER"
-
-[[kv_namespaces]]
-binding = "OG_CACHE"
-id = "6b8c7482828b45a18e420dd5f5352c35"
-
-
 # -----------------------------------------------------------------------------
 # Static Assets
 # https://developers.cloudflare.com/workers/static-assets/binding/
