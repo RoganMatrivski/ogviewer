@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import OGCard from "@/components/OGCard";
 import { Pagination } from "@/components/pagination";
 import UrlsDialog from "@/components/UrlsDialog";
@@ -87,6 +88,41 @@ export default async function ListLinePerUrl({
   const end = start + itemsPerPage;
   const items = filteredList.slice(start, end);
 
+  // Helper to increment/decrement or parse date patterns in the listUrl or filename
+  const dateMatch = listUrl.match(/(\d{4})-(\d{2})(?:-(\d{2}))?/);
+  let nextListUrl = "";
+  let prevListUrl = "";
+  if (dateMatch) {
+    const fullMatch = dateMatch[0];
+    const year = Number.parseInt(dateMatch[1], 10);
+    const month = Number.parseInt(dateMatch[2], 10);
+    const day = dateMatch[3] ? Number.parseInt(dateMatch[3], 10) : null;
+
+    let nextDate: Date;
+    let prevDate: Date;
+    if (day !== null) {
+      nextDate = new Date(Date.UTC(year, month - 1, day + 1));
+      prevDate = new Date(Date.UTC(year, month - 1, day - 1));
+    } else {
+      nextDate = new Date(Date.UTC(year, month, 1));
+      prevDate = new Date(Date.UTC(year, month - 2, 1));
+    }
+
+    const nextYear = nextDate.getUTCFullYear();
+    const nextMonth = String(nextDate.getUTCMonth() + 1).padStart(2, "0");
+    const nextDay = day !== null ? String(nextDate.getUTCDate()).padStart(2, "0") : null;
+
+    const prevYear = prevDate.getUTCFullYear();
+    const prevMonth = String(prevDate.getUTCMonth() + 1).padStart(2, "0");
+    const prevDay = day !== null ? String(prevDate.getUTCDate()).padStart(2, "0") : null;
+
+    const nextPattern = nextDay ? `${nextYear}-${nextMonth}-${nextDay}` : `${nextYear}-${nextMonth}`;
+    const prevPattern = prevDay ? `${prevYear}-${prevMonth}-${prevDay}` : `${prevYear}-${prevMonth}`;
+
+    nextListUrl = listUrl.replace(fullMatch, nextPattern);
+    prevListUrl = listUrl.replace(fullMatch, prevPattern);
+  }
+
   const newPageURLBuilder = (targetPage: number) => {
     const urlParams = new URLSearchParams();
     Object.entries(qParams).forEach(([key, value]) => {
@@ -101,6 +137,25 @@ export default async function ListLinePerUrl({
     urlParams.set("page", String(targetPage));
     return `/list?${urlParams.toString()}`;
   };
+
+  const makeListURL = (targetListUrl: string) => {
+    const urlParams = new URLSearchParams();
+    Object.entries(qParams).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        urlParams.append(key, value);
+      } else if (Array.isArray(value)) {
+        value.forEach((v) => {
+          urlParams.append(key, v);
+        });
+      }
+    });
+    urlParams.set("list", targetListUrl);
+    urlParams.delete("page"); // reset page when switching list/date
+    return `/list?${urlParams.toString()}`;
+  };
+
+  const nextListURL = nextListUrl ? makeListURL(nextListUrl) : "";
+  const prevListURL = prevListUrl ? makeListURL(prevListUrl) : "";
 
   return (
     <div className="container mx-auto px-4 pb-4">
@@ -131,6 +186,24 @@ export default async function ListLinePerUrl({
             >
               Go
             </button>
+            {prevListURL && (
+              <a
+                href={prevListURL}
+                title="Previous date"
+                className="flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </a>
+            )}
+            {nextListURL && (
+              <a
+                href={nextListURL}
+                title="Next date"
+                className="flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
           </div>
 
           {/* Row 2: pagination + result count + URLs button */}
