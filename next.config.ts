@@ -6,11 +6,9 @@ const nextConfig: NextConfig = {
 		loader: "custom",
 		loaderFile: "./image-loader.ts",
 	},
-	webpack: (config) => {
-		// Tell webpack to ignore "re2"
-		config.resolve.alias.re2 = false;
-		return config;
-	},
+	turbopack: {},
+	cacheComponents: true,
+	partialPrefetching: true,
 	output: "standalone",
 };
 
