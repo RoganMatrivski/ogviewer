@@ -2,14 +2,14 @@ import type { NextConfig } from "next";
 import path from "node:path";
 
 const nextConfig: NextConfig = {
-	images: {
-		loader: "custom",
-		loaderFile: "./image-loader.ts",
-	},
-	turbopack: {},
-	cacheComponents: true,
-	partialPrefetching: true,
-	output: "standalone",
+    images: {
+        loader: "custom",
+        loaderFile: "./image-loader.ts",
+    },
+    turbopack: {},
+    cacheComponents: false,
+    partialPrefetching: false,
+    output: "standalone",
 };
 
 // if (process.env.NODE_ENV === "development") {
